@@ -35,9 +35,12 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 11px; font-weight: 600; color: var(--muted); }
-.field input, .field select, .field textarea { padding: 7px 9px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); outline: none; width: 100%; font-family: inherit; }
+.field input, .field select, .field textarea {
+  padding: 7px 9px; font-size: 13px; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--bg); color: var(--text); outline: none; width: 100%; font-family: inherit;
+}
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79,99,210,.1); }
-.field textarea { resize: vertical; min-height: 60px; }
+.field textarea { resize: vertical; min-height: 56px; }
 .calc-box { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--success-bg); border: 1px solid var(--success-border); border-radius: var(--radius); font-size: 12px; color: var(--success-text); margin-top: 10px; flex-wrap: wrap; }
 .calc-box strong { font-size: 14px; }
 .actions { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; align-items: center; }
@@ -60,14 +63,14 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th { padding: 8px 9px; text-align: right; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--bg); }
-td { padding: 7px 9px; border-bottom: 1px solid var(--border); white-space: nowrap; color: var(--text); }
+td { padding: 7px 9px; border-bottom: 1px solid var(--border); white-space: nowrap; color: var(--text); max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
 tr:hover td { background: #f5f4f0; }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
 .b-teal { background: #e1f5ee; color: #085041; }
 .b-blue { background: #e6f1fb; color: #0c447c; }
 .b-amber { background: #faeeda; color: #633806; }
-.b-red { background: #fcebeb; color: #791f1f; }
 .b-purple { background: #eeedfe; color: #3c3489; }
+.b-gray { background: #f1efe8; color: #444441; }
 .empty { text-align: center; padding: 2.5rem; color: var(--muted); font-size: 13px; }
 .setup-banner { background: var(--info-bg); border: 1px solid var(--info-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 13px; color: var(--info-text); }
 .url-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
@@ -82,6 +85,12 @@ tr:hover td { background: #f5f4f0; }
 .stat-table th { padding: 7px 10px; text-align: right; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--bg); }
 .stat-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .stat-table tr:hover td { background: #f5f4f0; }
+.tl-filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.tl-filter-grid .field label { font-size: 11px; font-weight: 600; color: var(--muted); }
+.tl-filter-grid .field select { font-size: 12px; }
+.active-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; min-height: 24px; }
+.filter-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; background: var(--info-bg); color: var(--info-text); border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid var(--info-border); }
+.filter-tag-label { font-size: 10px; opacity: .7; }
 </style>
 </head>
 <body>
@@ -120,15 +129,15 @@ tr:hover td { background: #f5f4f0; }
   <!-- FORM -->
   <div id="pane-form">
     <div class="card">
-      <div class="sec-title">זיהוי תא וסטודנט</div>
+      <div class="sec-title">פרטי הסטודנט והתא</div>
       <div class="grid">
-        <div class="field"><label>Cell Type *</label>
-          <input id="f-cell-type" placeholder="שם סוג התא" list="list-cell-type" autocomplete="off">
-          <datalist id="list-cell-type"></datalist>
-        </div>
         <div class="field"><label>שם סטודנט *</label>
           <input id="f-student" placeholder="שם מלא" list="list-student" autocomplete="off">
           <datalist id="list-student"></datalist>
+        </div>
+        <div class="field"><label>Cell Type *</label>
+          <input id="f-cell-type" placeholder="שם סוג התא" list="list-cell-type" autocomplete="off">
+          <datalist id="list-cell-type"></datalist>
         </div>
         <div class="field"><label>Tissue</label>
           <input id="f-tissue" placeholder="סוג רקמה" list="list-tissue" autocomplete="off">
@@ -138,20 +147,37 @@ tr:hover td { background: #f5f4f0; }
           <input id="f-bovine" placeholder="מספר בקר" list="list-bovine" autocomplete="off">
           <datalist id="list-bovine"></datalist>
         </div>
-        <div class="field"><label>Passage</label><input type="number" id="f-passage" placeholder="0" min="0"></div>
-        <div class="field"><label>FGF</label>
-          <select id="f-fgf"><option value="">בחר...</option><option value="+">+ (עם FGF)</option><option value="-">- (ללא FGF)</option></select>
+        <div class="field"><label>Passage</label>
+          <input type="number" id="f-passage" placeholder="0" min="0">
         </div>
-        <div class="field"><label>Date of counting</label><input type="date" id="f-date"></div>
+        <div class="field"><label>מדיום גידול</label>
+          <input id="f-medium" placeholder="הזן או בחר מהמאגר" list="list-medium" autocomplete="off">
+          <datalist id="list-medium"></datalist>
+        </div>
+        <div class="field"><label>Date of counting</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="field"><label>הערות</label>
+          <input id="f-notes" placeholder="הזן או בחר מהמאגר" list="list-notes" autocomplete="off">
+          <datalist id="list-notes"></datalist>
+        </div>
       </div>
     </div>
     <div class="card">
       <div class="sec-title">נתוני גידול</div>
       <div class="grid">
-        <div class="field"><label>Cell number in plating</label><input type="number" id="f-plating" placeholder="תאים בזריעה" oninput="calcDT()"></div>
-        <div class="field"><label>Cell number after growth</label><input type="number" id="f-growth" placeholder="תאים לאחר גידול" oninput="calcDT()"></div>
-        <div class="field"><label>Number of days in culture</label><input type="number" id="f-days" placeholder="מספר ימים" oninput="calcDT()"></div>
-        <div class="field"><label>Doubling time (hours)</label><input type="number" id="f-dt" placeholder="חישוב אוטומטי / ידני" step="0.01"></div>
+        <div class="field"><label>Cell number in plating</label>
+          <input type="number" id="f-plating" placeholder="תאים בזריעה" oninput="calcDT()">
+        </div>
+        <div class="field"><label>Cell number after growth</label>
+          <input type="number" id="f-growth" placeholder="תאים לאחר גידול" oninput="calcDT()">
+        </div>
+        <div class="field"><label>Number of days in culture</label>
+          <input type="number" id="f-days" placeholder="מספר ימים" oninput="calcDT()">
+        </div>
+        <div class="field"><label>Doubling time (hours)</label>
+          <input type="number" id="f-dt" placeholder="חישוב אוטומטי / ידני" step="0.01">
+        </div>
       </div>
       <div class="calc-box" id="calc-box" style="display:none">
         Doubling time: <strong id="calc-val"></strong>h &nbsp;|&nbsp; Population Doubling: <strong id="calc-pd"></strong>
@@ -178,16 +204,16 @@ tr:hover td { background: #f5f4f0; }
         <input id="fi-student" placeholder="סטודנט..." oninput="renderDataTable()">
         <select id="fi-celltype" onchange="renderDataTable()"><option value="">כל Cell Types</option></select>
         <select id="fi-tissue" onchange="renderDataTable()"><option value="">כל הרקמות</option></select>
-        <select id="fi-fgf" onchange="renderDataTable()"><option value="">כל FGF</option><option value="+">FGF +</option><option value="-">FGF -</option></select>
+        <select id="fi-medium" onchange="renderDataTable()"><option value="">כל המדיומים</option></select>
         <button class="btn sm" onclick="loadData()" style="margin-right:auto">רענן</button>
         <button class="btn sm" onclick="exportCSV()">הורד CSV</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Cell Type</th><th>סטודנט</th><th>תאריך</th><th>Tissue</th><th>Bovine</th>
-            <th>Passage</th><th>FGF</th><th>Plating</th><th>After growth</th>
-            <th>Days</th><th>DT</th><th>Pop.D</th><th></th>
+            <th>סטודנט</th><th>Cell Type</th><th>תאריך</th><th>Tissue</th><th>Bovine</th>
+            <th>Passage</th><th>מדיום</th><th>Plating</th><th>After growth</th>
+            <th>Days</th><th>DT</th><th>Pop.D</th><th>הערות</th><th></th>
           </tr></thead>
           <tbody id="data-tbody"></tbody>
         </table>
@@ -200,24 +226,54 @@ tr:hover td { background: #f5f4f0; }
   <div id="pane-timeline" style="display:none">
     <div class="card">
       <div class="section-header"><h3>Population Doubling לאורך זמן</h3></div>
-      <div class="chart-controls">
-        <label>Cell Type:</label>
-        <select id="tl-celltype" onchange="renderTimeline()"><option value="">כל הסוגים</option></select>
-        <label>ציר X:</label>
-        <select id="tl-xaxis" onchange="renderTimeline()">
-          <option value="date">תאריך</option>
-          <option value="passage">Passage</option>
-        </select>
-        <label>קיבוץ:</label>
-        <select id="tl-group" onchange="renderTimeline()">
-          <option value="cell_type">Cell Type</option>
-          <option value="fgf">FGF</option>
-          <option value="tissue">Tissue</option>
-        </select>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">בחר פרמטרים לפילטור — כל שילוב ייוצג כקו נפרד בגרף.</p>
+
+      <div class="tl-filter-grid">
+        <div class="field">
+          <label>Cell Type</label>
+          <select id="tl-celltype" onchange="renderTimeline()" multiple size="4" style="height:auto"></select>
+        </div>
+        <div class="field">
+          <label>סטודנט</label>
+          <select id="tl-student" onchange="renderTimeline()" multiple size="4" style="height:auto"></select>
+        </div>
+        <div class="field">
+          <label>מדיום גידול</label>
+          <select id="tl-medium" onchange="renderTimeline()" multiple size="4" style="height:auto"></select>
+        </div>
+        <div class="field">
+          <label>הערות</label>
+          <select id="tl-notes" onchange="renderTimeline()" multiple size="4" style="height:auto"></select>
+        </div>
       </div>
-      <div class="chart-container"><canvas id="timeline-chart"></canvas></div>
-      <div id="tl-empty" class="empty" style="display:none">אין מספיק נתונים — צריך לפחות 2 מדידות</div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <div style="display:flex;gap:6px;align-items:center">
+          <label style="font-size:12px;color:var(--muted)">ציר X:</label>
+          <select id="tl-xaxis" onchange="renderTimeline()" style="padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+            <option value="date">תאריך</option>
+            <option value="passage">Passage</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <label style="font-size:12px;color:var(--muted)">קיבוץ שורה לפי:</label>
+          <select id="tl-group" onchange="renderTimeline()" style="padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+            <option value="cell_type">Cell Type</option>
+            <option value="student">סטודנט</option>
+            <option value="medium">מדיום</option>
+            <option value="tissue">Tissue</option>
+            <option value="combo">שילוב כל הפרמטרים</option>
+          </select>
+        </div>
+        <button class="btn sm" onclick="clearTlFilters()">נקה פילטרים</button>
+      </div>
+
+      <div class="active-filters" id="active-filters"></div>
+
+      <div class="chart-container" style="height:320px"><canvas id="timeline-chart"></canvas></div>
+      <div id="tl-empty" class="empty" style="display:none">אין מספיק נתונים — נסה לשנות את הפילטרים</div>
     </div>
+
     <div class="card">
       <div class="section-header"><h3>Doubling Time לאורך זמן</h3></div>
       <div class="chart-container"><canvas id="dt-chart"></canvas></div>
@@ -233,7 +289,7 @@ tr:hover td { background: #f5f4f0; }
           <select id="stat-group" onchange="renderStats()" style="padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)">
             <option value="cell_type">לפי Cell Type</option>
             <option value="tissue">לפי Tissue</option>
-            <option value="fgf">לפי FGF</option>
+            <option value="medium">לפי מדיום גידול</option>
             <option value="student">לפי סטודנט</option>
             <option value="bovine">לפי Bovine</option>
           </select>
@@ -263,7 +319,7 @@ tr:hover td { background: #f5f4f0; }
   <div id="pane-delete" style="display:none">
     <div class="card" style="border-color:var(--error-border)">
       <div class="sec-title" style="color:var(--error-text)">בקשת מחיקת רשומה</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:1rem">הבקשה תישמר ב-Google Sheets בגיליון "Delete Requests" לאישורך.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:1rem">הבקשה תישמר ב-Google Sheets בגיליון "Delete Requests" לאישור האדמין.</p>
       <div class="grid-3">
         <div class="field"><label>בחר רשומה</label>
           <select id="del-row"><option value="">— בחר רשומה —</option></select>
@@ -281,8 +337,11 @@ tr:hover td { background: #f5f4f0; }
       </div>
     </div>
     <div class="card">
-      <div class="sec-title">איך לאשר מחיקה</div>
-      <p style="font-size:13px;color:var(--muted);line-height:1.6">הבקשות נשמרות ב-Google Sheets בגיליון <strong>"Delete Requests"</strong>. לאחר בדיקה, מחק את השורה המתאימה ידנית מהגיליון <strong>"Cell Growth Data"</strong>.</p>
+      <div class="sec-title">איך האדמין מאשר מחיקה</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7">
+        הבקשות נשמרות ב-Google Sheets בגיליון <strong>"Delete Requests"</strong>.<br>
+        לאחר בדיקה, מחק את השורה המתאימה ידנית מהגיליון <strong>"Cell Growth Data"</strong>.
+      </p>
     </div>
   </div>
 
@@ -292,12 +351,12 @@ tr:hover td { background: #f5f4f0; }
 let SCRIPT_URL = localStorage.getItem('cellTrackerUrl') || '';
 let allEntries = [];
 let tlChart=null, dtChart=null, statsChart=null, compareChart=null;
-const COLORS = ['#4f63d2','#1D9E75','#D85A30','#D4537E','#BA7517','#534AB7','#639922','#185FA5','#993C1D'];
+const COLORS = ['#4f63d2','#1D9E75','#D85A30','#D4537E','#BA7517','#534AB7','#639922','#185FA5','#993C1D','#0F6E56','#712B13'];
 
 function init(){
   document.getElementById('f-date').valueAsDate = new Date();
   if(SCRIPT_URL){ loadData(); } else { showSetup(); setStatus(false,'ממתין להגדרה'); }
-  setInterval(()=>{ const a=document.querySelector('.nav-btn.active'); if(a&&['כל הנתונים','מעקב לאורך זמן','סטטיסטיקות'].includes(a.textContent)) loadData(); },25000);
+  setInterval(()=>{ const a=document.querySelector('.nav-btn.active'); if(a&&['כל הנתונים','מעקב לאורך זמן','סטטיסטיקות'].includes(a.textContent)) loadData(); }, 25000);
 }
 
 function showSetup(){ document.getElementById('setup-banner').style.display='block'; document.getElementById('script-url-input').value=SCRIPT_URL; }
@@ -331,7 +390,8 @@ function norm(e){
     tissue:    e['Tissue']||e.tissue||'',
     bovine:    e['Bovine number']||e.bovine||'',
     passage:   String(e['Passage']||e.passage||''),
-    fgf:       e['FGF']||e.fgf||'',
+    medium:    e['Medium']||e.medium||e['FGF']||e.fgf||'',
+    notes:     e['Notes']||e.notes||'',
     plating:   String(e['Cell plating']||e.plating||''),
     growth:    String(e['Cell after growth']||e.growth||''),
     days:      String(e['Days in culture']||e.days||''),
@@ -339,7 +399,7 @@ function norm(e){
   };
 }
 
-function pd(plating,growth){
+function pdVal(plating,growth){
   const n0=parseFloat(plating),n1=parseFloat(growth);
   return (n0>0&&n1>0) ? (Math.log(n1/n0)/Math.log(2)).toFixed(2) : '';
 }
@@ -357,32 +417,54 @@ function calcDT(){
 }
 function applyCalc(){ document.getElementById('f-dt').value=document.getElementById('calc-val').textContent; }
 
+function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort(); }
+
 function updateAuto(){
-  const sets={
-    'list-cell-type':[...new Set(allEntries.map(e=>e.cell_type).filter(Boolean))],
-    'list-student'  :[...new Set(allEntries.map(e=>e.student).filter(Boolean))],
-    'list-tissue'   :[...new Set(allEntries.map(e=>e.tissue).filter(Boolean))],
-    'list-bovine'   :[...new Set(allEntries.map(e=>e.bovine).filter(Boolean))]
+  const map={
+    'list-student':   uniq(allEntries.map(e=>e.student)),
+    'list-cell-type': uniq(allEntries.map(e=>e.cell_type)),
+    'list-tissue':    uniq(allEntries.map(e=>e.tissue)),
+    'list-bovine':    uniq(allEntries.map(e=>e.bovine)),
+    'list-medium':    uniq(allEntries.map(e=>e.medium)),
+    'list-notes':     uniq(allEntries.map(e=>e.notes))
   };
-  for(const [id,vals] of Object.entries(sets)){
+  for(const [id,vals] of Object.entries(map)){
     const dl=document.getElementById(id); if(dl) dl.innerHTML=vals.map(v=>`<option value="${v}">`).join('');
   }
-  const cts=[...new Set(allEntries.map(e=>e.cell_type).filter(Boolean))];
-  const tis=[...new Set(allEntries.map(e=>e.tissue).filter(Boolean))];
-  ['fi-celltype','tl-celltype','stat-filter-type'].forEach(id=>{
+  const cts=uniq(allEntries.map(e=>e.cell_type));
+  const tis=uniq(allEntries.map(e=>e.tissue));
+  const meds=uniq(allEntries.map(e=>e.medium));
+  const studs=uniq(allEntries.map(e=>e.student));
+  const notes=uniq(allEntries.map(e=>e.notes));
+
+  function updateSel(id, vals, lbl){
     const sel=document.getElementById(id); if(!sel) return;
     const cur=sel.value;
-    const lbl=id==='fi-celltype'?'כל Cell Types':id==='tl-celltype'?'כל הסוגים':'כל Cell Types';
-    sel.innerHTML=`<option value="">${lbl}</option>`+cts.map(t=>`<option value="${t}">${t}</option>`).join('');
-    if(cts.includes(cur)) sel.value=cur;
-  });
-  const ft=document.getElementById('fi-tissue');
-  if(ft){ const cur=ft.value; ft.innerHTML='<option value="">כל הרקמות</option>'+tis.map(t=>`<option value="${t}">${t}</option>`).join(''); if(tis.includes(cur)) ft.value=cur; }
+    sel.innerHTML=`<option value="">${lbl}</option>`+vals.map(v=>`<option value="${v}">${v}</option>`).join('');
+    if(vals.includes(cur)) sel.value=cur;
+  }
+  updateSel('fi-celltype',cts,'כל Cell Types');
+  updateSel('fi-tissue',tis,'כל הרקמות');
+  updateSel('fi-medium',meds,'כל המדיומים');
+  updateSel('stat-filter-type',cts,'כל Cell Types');
+
+  function updateMulti(id, vals){
+    const sel=document.getElementById(id); if(!sel) return;
+    const prevSelected=Array.from(sel.selectedOptions).map(o=>o.value);
+    sel.innerHTML=vals.map(v=>`<option value="${v}"${prevSelected.includes(v)?' selected':''}>${v}</option>`).join('');
+  }
+  updateMulti('tl-celltype',cts);
+  updateMulti('tl-student',studs);
+  updateMulti('tl-medium',meds);
+  updateMulti('tl-notes',notes);
+
   fillDelList();
 }
 
+function getMultiSel(id){ return Array.from(document.getElementById(id).selectedOptions).map(o=>o.value); }
+
 function clearForm(){
-  ['f-cell-type','f-student','f-tissue','f-bovine','f-passage','f-fgf','f-date','f-plating','f-growth','f-days','f-dt'].forEach(id=>document.getElementById(id).value='');
+  ['f-student','f-cell-type','f-tissue','f-bovine','f-passage','f-medium','f-date','f-notes','f-plating','f-growth','f-days','f-dt'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-date').valueAsDate=new Date();
   document.getElementById('calc-box').style.display='none';
   document.getElementById('form-msg').style.display='none';
@@ -391,16 +473,21 @@ function fmsg(txt,type){ const el=document.getElementById('form-msg'); el.textCo
 
 async function submitEntry(){
   if(!SCRIPT_URL){ showSetup(); return; }
+  const student=document.getElementById('f-student').value.trim();
   const ct=document.getElementById('f-cell-type').value.trim();
-  const st=document.getElementById('f-student').value.trim();
+  if(!student){ fmsg('נא להזין שם סטודנט','err'); return; }
   if(!ct){ fmsg('נא להזין Cell Type','err'); return; }
-  if(!st){ fmsg('נא להזין שם סטודנט','err'); return; }
   fmsg('שומר...','');
-  const p=new URLSearchParams({action:'post',cell_type:ct,student:st,
-    tissue:document.getElementById('f-tissue').value.trim(),bovine:document.getElementById('f-bovine').value.trim(),
-    passage:document.getElementById('f-passage').value.trim(),fgf:document.getElementById('f-fgf').value,
-    date_count:document.getElementById('f-date').value,plating:document.getElementById('f-plating').value.trim(),
-    growth:document.getElementById('f-growth').value.trim(),days:document.getElementById('f-days').value.trim(),
+  const p=new URLSearchParams({action:'post',student,cell_type:ct,
+    tissue:document.getElementById('f-tissue').value.trim(),
+    bovine:document.getElementById('f-bovine').value.trim(),
+    passage:document.getElementById('f-passage').value.trim(),
+    medium:document.getElementById('f-medium').value.trim(),
+    notes:document.getElementById('f-notes').value.trim(),
+    date_count:document.getElementById('f-date').value,
+    plating:document.getElementById('f-plating').value.trim(),
+    growth:document.getElementById('f-growth').value.trim(),
+    days:document.getElementById('f-days').value.trim(),
     dt:document.getElementById('f-dt').value.trim()}).toString();
   try {
     const r=await fetch(SCRIPT_URL+'?'+p,{method:'GET',mode:'cors'});
@@ -415,26 +502,30 @@ function renderDataTable(){
   const fs=(document.getElementById('fi-student').value||'').toLowerCase();
   const fct=document.getElementById('fi-celltype').value;
   const ft=document.getElementById('fi-tissue').value;
-  const ff=document.getElementById('fi-fgf').value;
+  const fm=document.getElementById('fi-medium').value;
   let rows=allEntries.filter(e=>{
     if(fs&&!(e.student||'').toLowerCase().includes(fs)) return false;
     if(fct&&e.cell_type!==fct) return false;
     if(ft&&e.tissue!==ft) return false;
-    if(ff&&e.fgf!==ff) return false;
+    if(fm&&e.medium!==fm) return false;
     return true;
   }).slice().reverse();
   const tb=document.getElementById('data-tbody'); tb.innerHTML='';
   document.getElementById('data-empty').style.display=rows.length?'none':'block';
-  const dtb=dt=>{ if(!dt||isNaN(dt)) return '—'; const cls=dt<24?'b-teal':dt<72?'b-blue':'b-amber'; return `<span class="badge ${cls}">${parseFloat(dt).toFixed(1)}h</span>`; };
-  const fgfb=f=>f?`<span class="badge ${f==='+'?'b-blue':'b-amber'}">${f}</span>`:'—';
+  const dtb=dt=>{ if(!dt||isNaN(parseFloat(dt))) return '—'; const v=parseFloat(dt); const cls=v<24?'b-teal':v<72?'b-blue':'b-amber'; return `<span class="badge ${cls}">${v.toFixed(1)}h</span>`; };
   rows.forEach(e=>{
-    const p=pd(e.plating,e.growth);
+    const p=pdVal(e.plating,e.growth);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><strong>${e.cell_type||'—'}</strong></td><td>${e.student||'—'}</td><td>${e.date_count||'—'}</td>
-      <td>${e.tissue||'—'}</td><td>${e.bovine||'—'}</td><td>${e.passage||'—'}</td><td>${fgfb(e.fgf)}</td>
-      <td>${e.plating?Number(e.plating).toLocaleString():'—'}</td><td>${e.growth?Number(e.growth).toLocaleString():'—'}</td>
+    tr.innerHTML=`<td title="${e.student}">${e.student||'—'}</td>
+      <td><strong>${e.cell_type||'—'}</strong></td>
+      <td>${e.date_count||'—'}</td><td title="${e.tissue}">${e.tissue||'—'}</td>
+      <td>${e.bovine||'—'}</td><td>${e.passage||'—'}</td>
+      <td title="${e.medium}">${e.medium||'—'}</td>
+      <td>${e.plating?Number(e.plating).toLocaleString():'—'}</td>
+      <td>${e.growth?Number(e.growth).toLocaleString():'—'}</td>
       <td>${e.days||'—'}</td><td>${dtb(e.dt)}</td>
       <td>${p?`<span class="badge b-purple">${p}</span>`:'—'}</td>
+      <td title="${e.notes||''}" style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${e.notes||'—'}</td>
       <td><button class="btn sm danger" onclick="quickDel('${e.ts.replace(/'/g,"\\'")}','${(e.cell_type||'').replace(/'/g,"\\'")}','${(e.student||'').replace(/'/g,"\\'")}')">מחק</button></td>`;
     tb.appendChild(tr);
   });
@@ -446,32 +537,71 @@ function renderDataTable(){
   document.getElementById('st-students').textContent=new Set(allEntries.map(e=>e.student).filter(Boolean)).size;
 }
 
+function clearTlFilters(){
+  ['tl-celltype','tl-student','tl-medium','tl-notes'].forEach(id=>{
+    const sel=document.getElementById(id);
+    Array.from(sel.options).forEach(o=>o.selected=false);
+  });
+  renderTimeline();
+}
+
 function renderTimeline(){
-  const gk=document.getElementById('tl-group').value;
-  const xa=document.getElementById('tl-xaxis').value;
-  const ctf=document.getElementById('tl-celltype').value;
-  let data=allEntries.filter(e=>e.plating&&e.growth);
-  if(ctf) data=data.filter(e=>e.cell_type===ctf);
+  const selCT   = getMultiSel('tl-celltype');
+  const selSt   = getMultiSel('tl-student');
+  const selMed  = getMultiSel('tl-medium');
+  const selNotes= getMultiSel('tl-notes');
+  const xAxis   = document.getElementById('tl-xaxis').value;
+  const groupBy = document.getElementById('tl-group').value;
+
+  let data = allEntries.filter(e=>e.plating&&e.growth);
+  if(selCT.length)    data=data.filter(e=>selCT.includes(e.cell_type));
+  if(selSt.length)    data=data.filter(e=>selSt.includes(e.student));
+  if(selMed.length)   data=data.filter(e=>selMed.includes(e.medium));
+  if(selNotes.length) data=data.filter(e=>selNotes.includes(e.notes));
+
+  const tags=document.getElementById('active-filters');
+  tags.innerHTML='';
+  const addTag=(lbl,val)=>{ const d=document.createElement('div'); d.className='filter-tag'; d.innerHTML=`<span class="filter-tag-label">${lbl}:</span> ${val}`; tags.appendChild(d); };
+  if(selCT.length)    selCT.forEach(v=>addTag('Cell Type',v));
+  if(selSt.length)    selSt.forEach(v=>addTag('סטודנט',v));
+  if(selMed.length)   selMed.forEach(v=>addTag('מדיום',v));
+  if(selNotes.length) selNotes.forEach(v=>addTag('הערה',v));
+
   const groups={};
   data.forEach(e=>{
-    const g=e[gk]||'לא ידוע';
-    if(!groups[g]) groups[g]=[];
-    const p=pd(e.plating,e.growth);
-    const x=xa==='date'?e.date_count:(e.passage||'0');
-    if(p&&x) groups[g].push({x,pd:parseFloat(p),dt:parseFloat(e.dt)||null});
+    let gKey;
+    if(groupBy==='combo'){
+      const parts=[];
+      if(e.cell_type) parts.push(e.cell_type);
+      if(e.student)   parts.push(e.student);
+      if(e.medium)    parts.push(e.medium);
+      if(e.notes)     parts.push(e.notes);
+      gKey=parts.join(' | ')||'ללא שם';
+    } else {
+      gKey=e[groupBy]||'לא ידוע';
+    }
+    if(!groups[gKey]) groups[gKey]=[];
+    const p=pdVal(e.plating,e.growth);
+    const x=xAxis==='date'?e.date_count:(e.passage||'0');
+    if(p&&x) groups[gKey].push({x,pd:parseFloat(p),dt:parseFloat(e.dt)||null});
   });
+
   const sg=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));
-  document.getElementById('tl-empty').style.display=Object.values(groups).some(g=>g.length>=1)?'none':'block';
+  const hasData=sg.some(([,pts])=>pts.length>=1);
+  document.getElementById('tl-empty').style.display=hasData?'none':'block';
+
   if(tlChart) tlChart.destroy();
   if(dtChart) dtChart.destroy();
-  tlChart=new Chart(document.getElementById('timeline-chart'),{type:'line',data:{datasets:sg.map(([n,pts],i)=>{
-    const s=pts.slice().sort((a,b)=>String(a.x).localeCompare(String(b.x)));
-    return{label:n,data:s.map(p=>({x:p.x,y:p.pd})),borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+'33',tension:.3,pointRadius:5,fill:false};
-  })},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{type:'category',title:{display:true,text:xa==='date'?'תאריך':'Passage'}},y:{title:{display:true,text:'Population Doubling'},beginAtZero:true}}}});
-  dtChart=new Chart(document.getElementById('dt-chart'),{type:'line',data:{datasets:sg.map(([n,pts],i)=>{
-    const s=pts.filter(p=>p.dt).slice().sort((a,b)=>String(a.x).localeCompare(String(b.x)));
-    return{label:n,data:s.map(p=>({x:p.x,y:p.dt})),borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+'33',tension:.3,pointRadius:5,fill:false};
-  })},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{type:'category',title:{display:true,text:xa==='date'?'תאריך':'Passage'}},y:{title:{display:true,text:'Doubling Time (h)'},beginAtZero:true}}}});
+
+  const mkDatasets=(key)=>sg.map(([n,pts],i)=>{
+    const s=pts.filter(p=>p[key]!==null).slice().sort((a,b)=>String(a.x).localeCompare(String(b.x)));
+    return{label:n,data:s.map(p=>({x:p.x,y:p[key]})),borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+'33',tension:.3,pointRadius:5,fill:false};
+  });
+
+  const opts=(yLabel)=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{x:{type:'category',title:{display:true,text:xAxis==='date'?'תאריך':'Passage'}},y:{title:{display:true,text:yLabel},beginAtZero:true}}});
+
+  tlChart=new Chart(document.getElementById('timeline-chart'),{type:'line',data:{datasets:mkDatasets('pd')},options:opts('Population Doubling')});
+  dtChart=new Chart(document.getElementById('dt-chart'),{type:'line',data:{datasets:mkDatasets('dt')},options:opts('Doubling Time (h)')});
 }
 
 function renderStats(){
@@ -482,7 +612,7 @@ function renderStats(){
   data.forEach(e=>{ const g=e[gk]||'לא ידוע'; if(!groups[g]) groups[g]=[]; groups[g].push(e); });
   const rows=Object.entries(groups).map(([n,ents])=>{
     const dts=ents.map(e=>parseFloat(e.dt)).filter(v=>!isNaN(v)&&v>0);
-    const pds=ents.map(e=>parseFloat(pd(e.plating,e.growth))).filter(v=>!isNaN(v)&&v>0);
+    const pds=ents.map(e=>parseFloat(pdVal(e.plating,e.growth))).filter(v=>!isNaN(v)&&v>0);
     const avg=dts.length?dts.reduce((a,b)=>a+b,0)/dts.length:null;
     const std=dts.length>1?Math.sqrt(dts.reduce((a,b)=>a+Math.pow(b-avg,2),0)/(dts.length-1)):null;
     const avgPD=pds.length?pds.reduce((a,b)=>a+b,0)/pds.length:null;
@@ -494,19 +624,21 @@ function renderStats(){
   if(statsChart) statsChart.destroy();
   statsChart=new Chart(document.getElementById('stats-chart'),{type:'bar',data:{labels:rows.map(r=>r.name),datasets:[{label:'ממוצע DT (h)',data:rows.map(r=>r.avg?parseFloat(r.avg.toFixed(1)):null),backgroundColor:rows.map((_,i)=>COLORS[i%COLORS.length]+'99'),borderColor:rows.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'שעות'},beginAtZero:true}}}});
   if(compareChart) compareChart.destroy();
-  const cts=[...new Set(allEntries.map(e=>e.cell_type).filter(Boolean))];
+  const cts=uniq(allEntries.map(e=>e.cell_type));
   const ctd=cts.map(ct=>{ const dts=allEntries.filter(e=>e.cell_type===ct).map(e=>parseFloat(e.dt)).filter(v=>!isNaN(v)&&v>0); return{ct,avg:dts.length?dts.reduce((a,b)=>a+b,0)/dts.length:null}; }).filter(d=>d.avg).sort((a,b)=>a.avg-b.avg);
   compareChart=new Chart(document.getElementById('compare-chart'),{type:'bar',data:{labels:ctd.map(d=>d.ct),datasets:[{label:'ממוצע DT (h)',data:ctd.map(d=>parseFloat(d.avg.toFixed(1))),backgroundColor:ctd.map((_,i)=>COLORS[i%COLORS.length]+'bb'),borderColor:ctd.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'שעות'},beginAtZero:true}}}});
 }
 
+function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort(); }
+
 function fillDelList(){
   const sel=document.getElementById('del-row'); if(!sel) return;
   const cur=sel.value;
-  sel.innerHTML='<option value="">— בחר רשומה —</option>'+allEntries.slice().reverse().map(e=>`<option value="${e.ts}">${e.date_count||''} | ${e.cell_type||''} | ${e.student||''} | P${e.passage||''}</option>`).join('');
+  sel.innerHTML='<option value="">— בחר רשומה —</option>'+allEntries.slice().reverse().map(e=>`<option value="${e.ts}">${e.date_count||''} | ${e.cell_type||''} | ${e.student||''} | P${e.passage||''} | ${e.medium||''}</option>`).join('');
   if(cur) sel.value=cur;
 }
 
-function quickDel(ts, ct, student){
+function quickDel(ts,ct,student){
   switchTab('delete');
   setTimeout(()=>{ document.getElementById('del-row').value=ts; document.getElementById('del-requester').value=student; },50);
 }
@@ -518,13 +650,13 @@ async function submitDeleteRequest(){
   if(!ts){ dmsg('נא לבחור רשומה','err'); return; }
   if(!reason){ dmsg('נא להזין סיבה','err'); return; }
   const entry=allEntries.find(e=>e.ts===ts);
-  if(!confirm(`שליחת בקשת מחיקה עבור:\n${entry?.cell_type||''} — ${entry?.student||''} (${entry?.date_count||''})\n\nהבקשה תישמר ב-Sheets לאישורך.`)) return;
+  if(!confirm(`שליחת בקשת מחיקה עבור:\n${entry?.cell_type||''} — ${entry?.student||''} (${entry?.date_count||''})\n\nהבקשה תישמר ב-Sheets לאישור האדמין.`)) return;
   try {
     const p=new URLSearchParams({action:'delete_request',row_ts:ts,reason,student:name,cell_type:entry?.cell_type||''}).toString();
     const r=await fetch(SCRIPT_URL+'?'+p,{method:'GET',mode:'cors'});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
-    if(d.status==='ok'){ dmsg('הבקשה נשלחה ונשמרה ב-Google Sheets','ok'); document.getElementById('del-reason').value=''; }
+    if(d.status==='ok'){ dmsg('הבקשה נשלחה לאדמין','ok'); document.getElementById('del-reason').value=''; document.getElementById('del-row').value=''; }
     else dmsg('שגיאה: '+(d.message||''),'err');
   } catch(e){ dmsg('שגיאת חיבור','err'); }
 }
@@ -532,8 +664,8 @@ function dmsg(txt,type){ const el=document.getElementById('del-msg'); el.textCon
 
 function exportCSV(){
   if(!allEntries.length) return;
-  const h=['Timestamp','Cell Type','Student','Date','Tissue','Bovine','Passage','FGF','Plating','After growth','Days','DT (h)','Pop.Doubling'];
-  const rows=allEntries.map(e=>[e.ts,e.cell_type,e.student,e.date_count,e.tissue,e.bovine,e.passage,e.fgf,e.plating,e.growth,e.days,e.dt,pd(e.plating,e.growth)]);
+  const h=['Timestamp','Student','Cell Type','Date','Tissue','Bovine','Passage','Medium','Notes','Plating','After growth','Days','DT (h)','Pop.Doubling'];
+  const rows=allEntries.map(e=>[e.ts,e.student,e.cell_type,e.date_count,e.tissue,e.bovine,e.passage,e.medium,e.notes,e.plating,e.growth,e.days,e.dt,pdVal(e.plating,e.growth)]);
   const csv=[h,...rows].map(r=>r.map(v=>`"${v||''}"`).join(',')).join('\n');
   const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv); a.download='cell_growth_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
 }
