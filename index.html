@@ -4,69 +4,84 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cell Growth Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #f8f8f6; --surface: #ffffff; --border: #e2e0d8;
-    --text: #1a1a18; --muted: #6b6b68;
-    --primary: #4f63d2; --primary-dark: #3d51c0;
-    --success-bg: #e1f5ee; --success-text: #085041;
-    --error-bg: #fcebeb; --error-text: #791f1f;
-    --warning-bg: #faeeda; --warning-text: #633806;
-    --info-bg: #e6f1fb; --info-text: #0c447c;
-    --radius: 8px; --radius-lg: 12px;
-  }
-  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; }
-  .topbar-title { font-size: 16px; font-weight: 500; }
-  .topbar-sub { font-size: 12px; color: var(--muted); }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; display: inline-block; margin-left: 6px; }
-  .status-dot.red { background: #E24B4A; }
-  .status-bar { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-  .main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 4px; width: fit-content; }
-  .tab { padding: 7px 18px; font-size: 13px; border-radius: var(--radius); cursor: pointer; border: none; background: transparent; color: var(--muted); font-weight: 500; }
-  .tab.active { background: var(--primary); color: #fff; }
-  .tab:hover:not(.active) { background: var(--bg); color: var(--text); }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
-  .sec-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
-  .field { display: flex; flex-direction: column; gap: 4px; }
-  .field label { font-size: 12px; font-weight: 500; color: var(--muted); }
-  .field input, .field select { padding: 8px 10px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); outline: none; width: 100%; }
-  .field input:focus, .field select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79,99,210,.1); }
-  .calc-box { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--success-bg); border-radius: var(--radius); font-size: 12px; color: var(--success-text); margin-top: 10px; }
-  .calc-box strong { font-size: 15px; }
-  .actions { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; align-items: center; }
-  .btn { padding: 8px 18px; font-size: 13px; font-weight: 500; border-radius: var(--radius); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
-  .btn:hover { background: var(--bg); }
-  .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-  .btn.primary:hover { background: var(--primary-dark); }
-  .btn.sm { padding: 4px 12px; font-size: 12px; }
-  .msg { font-size: 12px; padding: 4px 10px; border-radius: var(--radius); }
-  .msg.ok { background: var(--success-bg); color: var(--success-text); }
-  .msg.err { background: var(--error-bg); color: var(--error-text); }
-  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1rem; }
-  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: .85rem 1rem; }
-  .stat-lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-  .stat-val { font-size: 22px; font-weight: 500; }
-  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
-  .filter-row input, .filter-row select { padding: 6px 9px; font-size: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); outline: none; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { padding: 8px 10px; text-align: right; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
-  td { padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; color: var(--text); }
-  tr:hover td { background: var(--bg); }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
-  .b-teal { background: var(--success-bg); color: var(--success-text); }
-  .b-blue { background: var(--info-bg); color: var(--info-text); }
-  .b-amber { background: var(--warning-bg); color: var(--warning-text); }
-  .empty { text-align: center; padding: 2.5rem; color: var(--muted); font-size: 13px; }
-  .setup-banner { background: var(--info-bg); border: 1px solid #b5d4f4; border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 13px; color: var(--info-text); }
-  .setup-banner a { color: var(--primary); }
-  code { background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 4px; font-family: monospace; font-size: 12px; }
-  .url-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
-  .url-row input { flex: 1; min-width: 260px; padding: 7px 10px; font-size: 13px; border: 1px solid #b5d4f4; border-radius: 8px; background: #fff; color: var(--text); outline: none; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f8f6; --surface: #ffffff; --border: #e2e0d8;
+  --text: #1a1a18; --muted: #6b6b68;
+  --primary: #4f63d2; --primary-dark: #3d51c0;
+  --success-bg: #e1f5ee; --success-text: #085041; --success-border: #9fe1cb;
+  --error-bg: #fcebeb; --error-text: #791f1f; --error-border: #f7c1c1;
+  --warning-bg: #faeeda; --warning-text: #633806;
+  --info-bg: #e6f1fb; --info-text: #0c447c; --info-border: #b5d4f4;
+  --radius: 8px; --radius-lg: 12px;
+}
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 12px; flex-wrap: wrap; }
+.topbar-title { font-size: 16px; font-weight: 500; }
+.topbar-sub { font-size: 11px; color: var(--muted); }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; display: inline-block; }
+.status-dot.red { background: #E24B4A; }
+.status-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.main { max-width: 980px; margin: 0 auto; padding: 1.25rem 1rem; }
+.nav { display: flex; gap: 3px; margin-bottom: 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 4px; width: fit-content; flex-wrap: wrap; }
+.nav-btn { padding: 6px 16px; font-size: 13px; border-radius: var(--radius); cursor: pointer; border: none; background: transparent; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.nav-btn.active { background: var(--primary); color: #fff; }
+.nav-btn:hover:not(.active) { background: var(--bg); color: var(--text); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.sec-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; font-weight: 600; color: var(--muted); }
+.field input, .field select, .field textarea { padding: 7px 9px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); outline: none; width: 100%; font-family: inherit; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79,99,210,.1); }
+.field textarea { resize: vertical; min-height: 60px; }
+.calc-box { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--success-bg); border: 1px solid var(--success-border); border-radius: var(--radius); font-size: 12px; color: var(--success-text); margin-top: 10px; flex-wrap: wrap; }
+.calc-box strong { font-size: 14px; }
+.actions { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; align-items: center; }
+.btn { padding: 7px 16px; font-size: 13px; font-weight: 500; border-radius: var(--radius); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.btn:hover { background: var(--bg); }
+.btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn.primary:hover { background: var(--primary-dark); }
+.btn.danger { color: var(--error-text); border-color: var(--error-border); }
+.btn.danger:hover { background: var(--error-bg); }
+.btn.sm { padding: 3px 10px; font-size: 11px; }
+.inline-msg { font-size: 12px; padding: 4px 10px; border-radius: var(--radius); }
+.inline-msg.ok { background: var(--success-bg); color: var(--success-text); }
+.inline-msg.err { background: var(--error-bg); color: var(--error-text); }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: .85rem 1rem; }
+.stat-lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.stat-val { font-size: 22px; font-weight: 500; }
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.filter-row input, .filter-row select { padding: 5px 8px; font-size: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); outline: none; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { padding: 8px 9px; text-align: right; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--bg); }
+td { padding: 7px 9px; border-bottom: 1px solid var(--border); white-space: nowrap; color: var(--text); }
+tr:hover td { background: #f5f4f0; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.b-teal { background: #e1f5ee; color: #085041; }
+.b-blue { background: #e6f1fb; color: #0c447c; }
+.b-amber { background: #faeeda; color: #633806; }
+.b-red { background: #fcebeb; color: #791f1f; }
+.b-purple { background: #eeedfe; color: #3c3489; }
+.empty { text-align: center; padding: 2.5rem; color: var(--muted); font-size: 13px; }
+.setup-banner { background: var(--info-bg); border: 1px solid var(--info-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 13px; color: var(--info-text); }
+.url-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+.url-row input { flex: 1; min-width: 240px; padding: 7px 10px; font-size: 13px; border: 1px solid var(--info-border); border-radius: 8px; background: #fff; color: var(--text); outline: none; }
+.chart-container { position: relative; height: 300px; margin: .75rem 0; }
+.chart-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.chart-controls label { font-size: 12px; color: var(--muted); }
+.chart-controls select { padding: 5px 8px; font-size: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); outline: none; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; flex-wrap: wrap; gap: 8px; }
+.section-header h3 { font-size: 14px; font-weight: 500; }
+.stat-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.stat-table th { padding: 7px 10px; text-align: right; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--bg); }
+.stat-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.stat-table tr:hover td { background: #f5f4f0; }
 </style>
 </head>
 <body>
@@ -74,42 +89,56 @@
 <div class="topbar">
   <div>
     <div class="topbar-title">Cell Growth Tracker</div>
-    <div class="topbar-sub">מעקב מדידות פיצול תאים — מאגר משותף</div>
+    <div class="topbar-sub">מאגר נתונים משותף — Google Sheets</div>
   </div>
   <div class="status-bar">
     <span class="status-dot" id="sdot"></span>
     <span id="stxt">מתחבר...</span>
-    <button class="btn sm" onclick="showSetup()" style="margin-right:8px">שנה URL</button>
+    <button class="btn sm" onclick="showSetup()">שנה URL</button>
   </div>
 </div>
 
 <div class="main">
 
-  <div id="setup-banner" class="setup-banner">
-    <strong>הגדרה:</strong> הדבק את ה-URL של Google Apps Script שלך למטה.
+  <div id="setup-banner" class="setup-banner" style="display:none">
+    <strong>הגדרת חיבור ל-Google Sheets</strong>
     <div class="url-row">
       <input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/.../exec">
       <button class="btn primary sm" onclick="saveScriptUrl()">שמור וחבר</button>
-      <button class="btn sm" onclick="hideSetup()" id="cancel-btn" style="display:none">ביטול</button>
-    </div>
-    <div style="margin-top:8px;font-size:12px">
-      עדיין אין URL? <a href="https://script.google.com" target="_blank">פתח Apps Script</a> → Deploy → New deployment → Web App → Anyone → Deploy
+      <button class="btn sm" onclick="hideSetup()">ביטול</button>
     </div>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('form')">הוסף מדידה</button>
-    <button class="tab" onclick="switchTab('data')">כל הנתונים</button>
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchTab('form')">הוסף מדידה</button>
+    <button class="nav-btn" onclick="switchTab('data')">כל הנתונים</button>
+    <button class="nav-btn" onclick="switchTab('timeline')">מעקב לאורך זמן</button>
+    <button class="nav-btn" onclick="switchTab('stats')">סטטיסטיקות</button>
+    <button class="nav-btn" onclick="switchTab('delete')">בקשות מחיקה</button>
   </div>
 
+  <!-- FORM -->
   <div id="pane-form">
     <div class="card">
-      <div class="sec-title">פרטי הסטודנט והרקמה</div>
+      <div class="sec-title">זיהוי תא וסטודנט</div>
       <div class="grid">
-        <div class="field"><label>שם סטודנט *</label><input id="f-student" placeholder="שם מלא"></div>
-        <div class="field"><label>Tissue</label><input id="f-tissue" placeholder="סוג רקמה"></div>
-        <div class="field"><label>Bovine number</label><input id="f-bovine" placeholder="מספר בקר"></div>
-        <div class="field"><label>Passage</label><input type="number" id="f-passage" placeholder="0"></div>
+        <div class="field"><label>Cell Type *</label>
+          <input id="f-cell-type" placeholder="שם סוג התא" list="list-cell-type" autocomplete="off">
+          <datalist id="list-cell-type"></datalist>
+        </div>
+        <div class="field"><label>שם סטודנט *</label>
+          <input id="f-student" placeholder="שם מלא" list="list-student" autocomplete="off">
+          <datalist id="list-student"></datalist>
+        </div>
+        <div class="field"><label>Tissue</label>
+          <input id="f-tissue" placeholder="סוג רקמה" list="list-tissue" autocomplete="off">
+          <datalist id="list-tissue"></datalist>
+        </div>
+        <div class="field"><label>Bovine number</label>
+          <input id="f-bovine" placeholder="מספר בקר" list="list-bovine" autocomplete="off">
+          <datalist id="list-bovine"></datalist>
+        </div>
+        <div class="field"><label>Passage</label><input type="number" id="f-passage" placeholder="0" min="0"></div>
         <div class="field"><label>FGF</label>
           <select id="f-fgf"><option value="">בחר...</option><option value="+">+ (עם FGF)</option><option value="-">- (ללא FGF)</option></select>
         </div>
@@ -125,43 +154,135 @@
         <div class="field"><label>Doubling time (hours)</label><input type="number" id="f-dt" placeholder="חישוב אוטומטי / ידני" step="0.01"></div>
       </div>
       <div class="calc-box" id="calc-box" style="display:none">
-        Doubling time מחושב: <strong id="calc-val"></strong> שעות
-        <button class="btn sm" onclick="applyCalc()">החל</button>
+        Doubling time: <strong id="calc-val"></strong>h &nbsp;|&nbsp; Population Doubling: <strong id="calc-pd"></strong>
+        <button class="btn sm" onclick="applyCalc()">החל DT</button>
       </div>
     </div>
     <div class="actions">
       <button class="btn primary" onclick="submitEntry()">+ שמור במאגר</button>
       <button class="btn" onclick="clearForm()">נקה</button>
-      <span id="form-msg" class="msg" style="display:none"></span>
+      <span id="form-msg" class="inline-msg" style="display:none"></span>
     </div>
   </div>
 
+  <!-- DATA -->
   <div id="pane-data" style="display:none">
     <div class="stats-row">
       <div class="stat"><div class="stat-lbl">סה"כ מדידות</div><div class="stat-val" id="st-total">—</div></div>
-      <div class="stat"><div class="stat-lbl">ממוצע Doubling Time</div><div class="stat-val" id="st-avg">—</div></div>
+      <div class="stat"><div class="stat-lbl">Cell Types</div><div class="stat-val" id="st-types">—</div></div>
+      <div class="stat"><div class="stat-lbl">ממוצע DT</div><div class="stat-val" id="st-avg">—</div></div>
       <div class="stat"><div class="stat-lbl">סטודנטים</div><div class="stat-val" id="st-students">—</div></div>
-      <div class="stat"><div class="stat-lbl">רקמות</div><div class="stat-val" id="st-tissues">—</div></div>
     </div>
     <div class="card">
       <div class="filter-row">
-        <input id="fi-student" placeholder="חפש סטודנט..." oninput="renderTable()">
-        <select id="fi-tissue" onchange="renderTable()"><option value="">כל הרקמות</option></select>
-        <select id="fi-fgf" onchange="renderTable()"><option value="">כל FGF</option><option value="+">FGF +</option><option value="-">FGF -</option></select>
+        <input id="fi-student" placeholder="סטודנט..." oninput="renderDataTable()">
+        <select id="fi-celltype" onchange="renderDataTable()"><option value="">כל Cell Types</option></select>
+        <select id="fi-tissue" onchange="renderDataTable()"><option value="">כל הרקמות</option></select>
+        <select id="fi-fgf" onchange="renderDataTable()"><option value="">כל FGF</option><option value="+">FGF +</option><option value="-">FGF -</option></select>
         <button class="btn sm" onclick="loadData()" style="margin-right:auto">רענן</button>
         <button class="btn sm" onclick="exportCSV()">הורד CSV</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>סטודנט</th><th>תאריך</th><th>Tissue</th><th>Bovine</th>
+            <th>Cell Type</th><th>סטודנט</th><th>תאריך</th><th>Tissue</th><th>Bovine</th>
             <th>Passage</th><th>FGF</th><th>Plating</th><th>After growth</th>
-            <th>Days</th><th>Doubling time</th>
+            <th>Days</th><th>DT</th><th>Pop.D</th><th></th>
           </tr></thead>
-          <tbody id="tbody"></tbody>
+          <tbody id="data-tbody"></tbody>
         </table>
-        <div class="empty" id="empty-msg" style="display:none">אין נתונים עדיין</div>
+        <div class="empty" id="data-empty" style="display:none">אין נתונים</div>
       </div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div id="pane-timeline" style="display:none">
+    <div class="card">
+      <div class="section-header"><h3>Population Doubling לאורך זמן</h3></div>
+      <div class="chart-controls">
+        <label>Cell Type:</label>
+        <select id="tl-celltype" onchange="renderTimeline()"><option value="">כל הסוגים</option></select>
+        <label>ציר X:</label>
+        <select id="tl-xaxis" onchange="renderTimeline()">
+          <option value="date">תאריך</option>
+          <option value="passage">Passage</option>
+        </select>
+        <label>קיבוץ:</label>
+        <select id="tl-group" onchange="renderTimeline()">
+          <option value="cell_type">Cell Type</option>
+          <option value="fgf">FGF</option>
+          <option value="tissue">Tissue</option>
+        </select>
+      </div>
+      <div class="chart-container"><canvas id="timeline-chart"></canvas></div>
+      <div id="tl-empty" class="empty" style="display:none">אין מספיק נתונים — צריך לפחות 2 מדידות</div>
+    </div>
+    <div class="card">
+      <div class="section-header"><h3>Doubling Time לאורך זמן</h3></div>
+      <div class="chart-container"><canvas id="dt-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="pane-stats" style="display:none">
+    <div class="card">
+      <div class="section-header">
+        <h3>השוואה לפי חיתוך</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="stat-group" onchange="renderStats()" style="padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+            <option value="cell_type">לפי Cell Type</option>
+            <option value="tissue">לפי Tissue</option>
+            <option value="fgf">לפי FGF</option>
+            <option value="student">לפי סטודנט</option>
+            <option value="bovine">לפי Bovine</option>
+          </select>
+          <select id="stat-filter-type" onchange="renderStats()" style="padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+            <option value="">כל Cell Types</option>
+          </select>
+        </div>
+      </div>
+      <div class="chart-container" style="height:240px"><canvas id="stats-chart"></canvas></div>
+      <div style="margin-top:1rem;overflow-x:auto">
+        <table class="stat-table">
+          <thead><tr>
+            <th>קבוצה</th><th>מדידות</th><th>ממוצע DT (h)</th><th>מינימום</th><th>מקסימום</th><th>סטיית תקן</th><th>ממוצע PD</th>
+          </tr></thead>
+          <tbody id="stats-tbody"></tbody>
+        </table>
+        <div class="empty" id="stats-empty" style="display:none">אין נתונים</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-header"><h3>השוואת Cell Types — Doubling Time</h3></div>
+      <div class="chart-container" style="height:240px"><canvas id="compare-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- DELETE -->
+  <div id="pane-delete" style="display:none">
+    <div class="card" style="border-color:var(--error-border)">
+      <div class="sec-title" style="color:var(--error-text)">בקשת מחיקת רשומה</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:1rem">הבקשה תישמר ב-Google Sheets בגיליון "Delete Requests" לאישורך.</p>
+      <div class="grid-3">
+        <div class="field"><label>בחר רשומה</label>
+          <select id="del-row"><option value="">— בחר רשומה —</option></select>
+        </div>
+        <div class="field"><label>שם מגיש הבקשה</label>
+          <input id="del-requester" placeholder="שמך">
+        </div>
+      </div>
+      <div class="field" style="margin-top:10px"><label>סיבת המחיקה *</label>
+        <textarea id="del-reason" placeholder="פרט את הסיבה למחיקה..."></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn danger" onclick="submitDeleteRequest()">שלח בקשת מחיקה</button>
+        <span id="del-msg" class="inline-msg" style="display:none"></span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-title">איך לאשר מחיקה</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6">הבקשות נשמרות ב-Google Sheets בגיליון <strong>"Delete Requests"</strong>. לאחר בדיקה, מחק את השורה המתאימה ידנית מהגיליון <strong>"Cell Growth Data"</strong>.</p>
     </div>
   </div>
 
@@ -170,198 +291,272 @@
 <script>
 let SCRIPT_URL = localStorage.getItem('cellTrackerUrl') || '';
 let allEntries = [];
+let tlChart=null, dtChart=null, statsChart=null, compareChart=null;
+const COLORS = ['#4f63d2','#1D9E75','#D85A30','#D4537E','#BA7517','#534AB7','#639922','#185FA5','#993C1D'];
 
 function init(){
   document.getElementById('f-date').valueAsDate = new Date();
-  if(SCRIPT_URL){
-    document.getElementById('setup-banner').style.display = 'none';
-    loadData();
-  } else {
-    setStatus(false, 'ממתין להגדרה');
-  }
-  setInterval(()=>{ if(document.getElementById('pane-data').style.display!=='none') loadData(); }, 20000);
+  if(SCRIPT_URL){ loadData(); } else { showSetup(); setStatus(false,'ממתין להגדרה'); }
+  setInterval(()=>{ const a=document.querySelector('.nav-btn.active'); if(a&&['כל הנתונים','מעקב לאורך זמן','סטטיסטיקות'].includes(a.textContent)) loadData(); },25000);
 }
 
-function showSetup(){
-  const banner = document.getElementById('setup-banner');
-  banner.style.display = 'block';
-  document.getElementById('script-url-input').value = SCRIPT_URL;
-  document.getElementById('cancel-btn').style.display = SCRIPT_URL ? 'inline-block' : 'none';
-}
-function hideSetup(){ document.getElementById('setup-banner').style.display = 'none'; }
-
+function showSetup(){ document.getElementById('setup-banner').style.display='block'; document.getElementById('script-url-input').value=SCRIPT_URL; }
+function hideSetup(){ document.getElementById('setup-banner').style.display='none'; }
 function saveScriptUrl(){
-  const val = document.getElementById('script-url-input').value.trim();
-  if(!val || !val.includes('script.google.com')){ alert('URL לא תקין — חייב להכיל script.google.com'); return; }
-  SCRIPT_URL = val;
-  localStorage.setItem('cellTrackerUrl', val);
-  hideSetup();
-  loadData();
+  const v=document.getElementById('script-url-input').value.trim();
+  if(!v||!v.includes('script.google.com')){ alert('URL לא תקין'); return; }
+  SCRIPT_URL=v; localStorage.setItem('cellTrackerUrl',v); hideSetup(); loadData();
 }
-
-function setStatus(ok, txt){
-  document.getElementById('sdot').className = 'status-dot' + (ok?'':' red');
-  document.getElementById('stxt').textContent = txt;
-}
+function setStatus(ok,txt){ document.getElementById('sdot').className='status-dot'+(ok?'':' red'); document.getElementById('stxt').textContent=txt; }
 
 async function loadData(){
   if(!SCRIPT_URL){ setStatus(false,'ממתין להגדרה'); return; }
   setStatus(true,'טוען...');
   try {
-    const url = SCRIPT_URL + (SCRIPT_URL.includes('?') ? '&' : '?') + 'action=get&t=' + Date.now();
-    const r = await fetch(url, {method:'GET', mode:'cors'});
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    allEntries = data.entries || [];
-    setStatus(true, 'מחובר — ' + allEntries.length + ' רשומות');
-    updateStats(); renderTable(); updateTissueFilter();
-  } catch(e) {
-    setStatus(false,'שגיאת חיבור — ' + e.message);
-  }
+    const r=await fetch(SCRIPT_URL+'?action=get&t='+Date.now(),{method:'GET',mode:'cors'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    allEntries=(data.entries||[]).map(norm);
+    setStatus(true,'מחובר — '+allEntries.length+' רשומות');
+    updateAuto(); refreshTab();
+  } catch(e){ setStatus(false,'שגיאת חיבור: '+e.message); }
+}
+
+function norm(e){
+  return {
+    ts:        String(e['Timestamp']||e.ts||''),
+    cell_type: e['Cell Type']||e.cell_type||'',
+    student:   e['Student']||e.student||'',
+    date_count:e['Date of counting']||e.date_count||'',
+    tissue:    e['Tissue']||e.tissue||'',
+    bovine:    e['Bovine number']||e.bovine||'',
+    passage:   String(e['Passage']||e.passage||''),
+    fgf:       e['FGF']||e.fgf||'',
+    plating:   String(e['Cell plating']||e.plating||''),
+    growth:    String(e['Cell after growth']||e.growth||''),
+    days:      String(e['Days in culture']||e.days||''),
+    dt:        String(e['Doubling time (h)']||e.dt||'')
+  };
+}
+
+function pd(plating,growth){
+  const n0=parseFloat(plating),n1=parseFloat(growth);
+  return (n0>0&&n1>0) ? (Math.log(n1/n0)/Math.log(2)).toFixed(2) : '';
 }
 
 function calcDT(){
-  const n0 = parseFloat(document.getElementById('f-plating').value);
-  const n1 = parseFloat(document.getElementById('f-growth').value);
-  const d  = parseFloat(document.getElementById('f-days').value);
-  const box = document.getElementById('calc-box');
-  if(n0>0 && n1>n0 && d>0){
-    const dt = (d*24*Math.log(2))/Math.log(n1/n0);
-    document.getElementById('calc-val').textContent = dt.toFixed(2);
-    box.style.display = 'flex';
-  } else { box.style.display = 'none'; }
+  const n0=parseFloat(document.getElementById('f-plating').value);
+  const n1=parseFloat(document.getElementById('f-growth').value);
+  const d=parseFloat(document.getElementById('f-days').value);
+  const box=document.getElementById('calc-box');
+  if(n0>0&&n1>n0&&d>0){
+    document.getElementById('calc-val').textContent=((d*24*Math.log(2))/Math.log(n1/n0)).toFixed(2);
+    document.getElementById('calc-pd').textContent=(Math.log(n1/n0)/Math.log(2)).toFixed(2);
+    box.style.display='flex';
+  } else box.style.display='none';
 }
+function applyCalc(){ document.getElementById('f-dt').value=document.getElementById('calc-val').textContent; }
 
-function applyCalc(){ document.getElementById('f-dt').value = document.getElementById('calc-val').textContent; }
+function updateAuto(){
+  const sets={
+    'list-cell-type':[...new Set(allEntries.map(e=>e.cell_type).filter(Boolean))],
+    'list-student'  :[...new Set(allEntries.map(e=>e.student).filter(Boolean))],
+    'list-tissue'   :[...new Set(allEntries.map(e=>e.tissue).filter(Boolean))],
+    'list-bovine'   :[...new Set(allEntries.map(e=>e.bovine).filter(Boolean))]
+  };
+  for(const [id,vals] of Object.entries(sets)){
+    const dl=document.getElementById(id); if(dl) dl.innerHTML=vals.map(v=>`<option value="${v}">`).join('');
+  }
+  const cts=[...new Set(allEntries.map(e=>e.cell_type).filter(Boolean))];
+  const tis=[...new Set(allEntries.map(e=>e.tissue).filter(Boolean))];
+  ['fi-celltype','tl-celltype','stat-filter-type'].forEach(id=>{
+    const sel=document.getElementById(id); if(!sel) return;
+    const cur=sel.value;
+    const lbl=id==='fi-celltype'?'כל Cell Types':id==='tl-celltype'?'כל הסוגים':'כל Cell Types';
+    sel.innerHTML=`<option value="">${lbl}</option>`+cts.map(t=>`<option value="${t}">${t}</option>`).join('');
+    if(cts.includes(cur)) sel.value=cur;
+  });
+  const ft=document.getElementById('fi-tissue');
+  if(ft){ const cur=ft.value; ft.innerHTML='<option value="">כל הרקמות</option>'+tis.map(t=>`<option value="${t}">${t}</option>`).join(''); if(tis.includes(cur)) ft.value=cur; }
+  fillDelList();
+}
 
 function clearForm(){
-  ['f-student','f-tissue','f-bovine','f-passage','f-fgf','f-date','f-plating','f-growth','f-days','f-dt']
-    .forEach(id=>{ document.getElementById(id).value=''; });
-  document.getElementById('f-date').valueAsDate = new Date();
-  document.getElementById('calc-box').style.display = 'none';
-  hideMsg();
+  ['f-cell-type','f-student','f-tissue','f-bovine','f-passage','f-fgf','f-date','f-plating','f-growth','f-days','f-dt'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-date').valueAsDate=new Date();
+  document.getElementById('calc-box').style.display='none';
+  document.getElementById('form-msg').style.display='none';
 }
-
-function showMsg(txt, type){
-  const el = document.getElementById('form-msg');
-  el.textContent = txt; el.className = 'msg ' + type; el.style.display = 'inline-block';
-  if(type==='ok') setTimeout(hideMsg, 3500);
-}
-function hideMsg(){ document.getElementById('form-msg').style.display='none'; }
+function fmsg(txt,type){ const el=document.getElementById('form-msg'); el.textContent=txt; el.className='inline-msg '+type; el.style.display='inline-block'; if(type==='ok') setTimeout(()=>el.style.display='none',3500); }
 
 async function submitEntry(){
   if(!SCRIPT_URL){ showSetup(); return; }
-  const student = document.getElementById('f-student').value.trim();
-  if(!student){ showMsg('נא להזין שם סטודנט','err'); return; }
-  const entry = {
-    action: 'post',
-    student, tissue: document.getElementById('f-tissue').value.trim(),
-    bovine: document.getElementById('f-bovine').value.trim(),
-    passage: document.getElementById('f-passage').value.trim(),
-    fgf: document.getElementById('f-fgf').value,
-    date_count: document.getElementById('f-date').value,
-    plating: document.getElementById('f-plating').value.trim(),
-    growth: document.getElementById('f-growth').value.trim(),
-    days: document.getElementById('f-days').value.trim(),
-    dt: document.getElementById('f-dt').value.trim()
-  };
-  showMsg('שומר...','');
+  const ct=document.getElementById('f-cell-type').value.trim();
+  const st=document.getElementById('f-student').value.trim();
+  if(!ct){ fmsg('נא להזין Cell Type','err'); return; }
+  if(!st){ fmsg('נא להזין שם סטודנט','err'); return; }
+  fmsg('שומר...','');
+  const p=new URLSearchParams({action:'post',cell_type:ct,student:st,
+    tissue:document.getElementById('f-tissue').value.trim(),bovine:document.getElementById('f-bovine').value.trim(),
+    passage:document.getElementById('f-passage').value.trim(),fgf:document.getElementById('f-fgf').value,
+    date_count:document.getElementById('f-date').value,plating:document.getElementById('f-plating').value.trim(),
+    growth:document.getElementById('f-growth').value.trim(),days:document.getElementById('f-days').value.trim(),
+    dt:document.getElementById('f-dt').value.trim()}).toString();
   try {
-    const params = new URLSearchParams(entry).toString();
-    const url = SCRIPT_URL + (SCRIPT_URL.includes('?') ? '&' : '?') + params;
-    const r = await fetch(url, {method:'GET', mode:'cors'});
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    if(data.status === 'ok'){
-      showMsg('נשמר בהצלחה ב-Google Sheets!','ok');
-      clearForm(); loadData();
-    } else { showMsg('שגיאה: ' + (data.message||'לא ידועה'),'err'); }
-  } catch(e) { showMsg('שגיאת חיבור: ' + e.message,'err'); }
+    const r=await fetch(SCRIPT_URL+'?'+p,{method:'GET',mode:'cors'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(d.status==='ok'){ fmsg('נשמר בהצלחה!','ok'); clearForm(); loadData(); }
+    else fmsg('שגיאה: '+(d.message||''),'err');
+  } catch(e){ fmsg('שגיאת חיבור: '+e.message,'err'); }
 }
 
-function getVal(e, ...keys){ for(const k of keys){ if(e[k]!==undefined && e[k]!=='') return e[k]; } return ''; }
-
-function updateStats(){
-  const dts = allEntries.map(e=>parseFloat(getVal(e,'Doubling time (h)','dt'))).filter(v=>!isNaN(v)&&v>0);
-  const avg = dts.length ? dts.reduce((a,b)=>a+b,0)/dts.length : null;
-  document.getElementById('st-total').textContent = allEntries.length;
-  document.getElementById('st-avg').textContent = avg ? avg.toFixed(1)+'h' : '—';
-  document.getElementById('st-students').textContent = new Set(allEntries.map(e=>getVal(e,'Student','student')).filter(Boolean)).size;
-  document.getElementById('st-tissues').textContent = new Set(allEntries.map(e=>getVal(e,'Tissue','tissue')).filter(Boolean)).size;
-}
-
-function updateTissueFilter(){
-  const sel = document.getElementById('fi-tissue');
-  const cur = sel.value;
-  const tissues = [...new Set(allEntries.map(e=>getVal(e,'Tissue','tissue')).filter(Boolean))];
-  sel.innerHTML = '<option value="">כל הרקמות</option>' + tissues.map(t=>`<option value="${t}">${t}</option>`).join('');
-  if(tissues.includes(cur)) sel.value = cur;
-}
-
-function renderTable(){
-  const fs = (document.getElementById('fi-student').value||'').toLowerCase();
-  const ft = document.getElementById('fi-tissue').value;
-  const ff = document.getElementById('fi-fgf').value;
-  let rows = allEntries.filter(e=>{
-    if(fs && !(getVal(e,'Student','student')||'').toLowerCase().includes(fs)) return false;
-    if(ft && getVal(e,'Tissue','tissue') !== ft) return false;
-    if(ff && getVal(e,'FGF','fgf') !== ff) return false;
+function renderDataTable(){
+  const fs=(document.getElementById('fi-student').value||'').toLowerCase();
+  const fct=document.getElementById('fi-celltype').value;
+  const ft=document.getElementById('fi-tissue').value;
+  const ff=document.getElementById('fi-fgf').value;
+  let rows=allEntries.filter(e=>{
+    if(fs&&!(e.student||'').toLowerCase().includes(fs)) return false;
+    if(fct&&e.cell_type!==fct) return false;
+    if(ft&&e.tissue!==ft) return false;
+    if(ff&&e.fgf!==ff) return false;
     return true;
   }).slice().reverse();
-
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
-  document.getElementById('empty-msg').style.display = rows.length ? 'none' : 'block';
+  const tb=document.getElementById('data-tbody'); tb.innerHTML='';
+  document.getElementById('data-empty').style.display=rows.length?'none':'block';
+  const dtb=dt=>{ if(!dt||isNaN(dt)) return '—'; const cls=dt<24?'b-teal':dt<72?'b-blue':'b-amber'; return `<span class="badge ${cls}">${parseFloat(dt).toFixed(1)}h</span>`; };
+  const fgfb=f=>f?`<span class="badge ${f==='+'?'b-blue':'b-amber'}">${f}</span>`:'—';
   rows.forEach(e=>{
-    const dtRaw = parseFloat(getVal(e,'Doubling time (h)','dt'));
-    let dtBadge = '—';
-    if(!isNaN(dtRaw)&&dtRaw>0){
-      const cls = dtRaw<24?'b-teal':dtRaw<72?'b-blue':'b-amber';
-      dtBadge = `<span class="badge ${cls}">${dtRaw.toFixed(1)}h</span>`;
-    }
-    const fgf = getVal(e,'FGF','fgf');
-    const fgfBadge = fgf ? `<span class="badge ${fgf==='+'?'b-blue':'b-amber'}">${fgf}</span>` : '—';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${getVal(e,'Student','student')||'—'}</td>
-      <td>${getVal(e,'Date of counting','date_count')||'—'}</td>
-      <td>${getVal(e,'Tissue','tissue')||'—'}</td>
-      <td>${getVal(e,'Bovine number','bovine')||'—'}</td>
-      <td>${getVal(e,'Passage','passage')||'—'}</td>
-      <td>${fgfBadge}</td>
-      <td>${getVal(e,'Cell plating','plating') ? Number(getVal(e,'Cell plating','plating')).toLocaleString() : '—'}</td>
-      <td>${getVal(e,'Cell after growth','growth') ? Number(getVal(e,'Cell after growth','growth')).toLocaleString() : '—'}</td>
-      <td>${getVal(e,'Days in culture','days')||'—'}</td>
-      <td>${dtBadge}</td>`;
-    tbody.appendChild(tr);
+    const p=pd(e.plating,e.growth);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><strong>${e.cell_type||'—'}</strong></td><td>${e.student||'—'}</td><td>${e.date_count||'—'}</td>
+      <td>${e.tissue||'—'}</td><td>${e.bovine||'—'}</td><td>${e.passage||'—'}</td><td>${fgfb(e.fgf)}</td>
+      <td>${e.plating?Number(e.plating).toLocaleString():'—'}</td><td>${e.growth?Number(e.growth).toLocaleString():'—'}</td>
+      <td>${e.days||'—'}</td><td>${dtb(e.dt)}</td>
+      <td>${p?`<span class="badge b-purple">${p}</span>`:'—'}</td>
+      <td><button class="btn sm danger" onclick="quickDel('${e.ts.replace(/'/g,"\\'")}','${(e.cell_type||'').replace(/'/g,"\\'")}','${(e.student||'').replace(/'/g,"\\'")}')">מחק</button></td>`;
+    tb.appendChild(tr);
   });
-  updateStats(); updateTissueFilter();
+  const dts=allEntries.map(e=>parseFloat(e.dt)).filter(v=>!isNaN(v)&&v>0);
+  const avg=dts.length?dts.reduce((a,b)=>a+b,0)/dts.length:null;
+  document.getElementById('st-total').textContent=allEntries.length;
+  document.getElementById('st-types').textContent=new Set(allEntries.map(e=>e.cell_type).filter(Boolean)).size;
+  document.getElementById('st-avg').textContent=avg?avg.toFixed(1)+'h':'—';
+  document.getElementById('st-students').textContent=new Set(allEntries.map(e=>e.student).filter(Boolean)).size;
 }
+
+function renderTimeline(){
+  const gk=document.getElementById('tl-group').value;
+  const xa=document.getElementById('tl-xaxis').value;
+  const ctf=document.getElementById('tl-celltype').value;
+  let data=allEntries.filter(e=>e.plating&&e.growth);
+  if(ctf) data=data.filter(e=>e.cell_type===ctf);
+  const groups={};
+  data.forEach(e=>{
+    const g=e[gk]||'לא ידוע';
+    if(!groups[g]) groups[g]=[];
+    const p=pd(e.plating,e.growth);
+    const x=xa==='date'?e.date_count:(e.passage||'0');
+    if(p&&x) groups[g].push({x,pd:parseFloat(p),dt:parseFloat(e.dt)||null});
+  });
+  const sg=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));
+  document.getElementById('tl-empty').style.display=Object.values(groups).some(g=>g.length>=1)?'none':'block';
+  if(tlChart) tlChart.destroy();
+  if(dtChart) dtChart.destroy();
+  tlChart=new Chart(document.getElementById('timeline-chart'),{type:'line',data:{datasets:sg.map(([n,pts],i)=>{
+    const s=pts.slice().sort((a,b)=>String(a.x).localeCompare(String(b.x)));
+    return{label:n,data:s.map(p=>({x:p.x,y:p.pd})),borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+'33',tension:.3,pointRadius:5,fill:false};
+  })},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{type:'category',title:{display:true,text:xa==='date'?'תאריך':'Passage'}},y:{title:{display:true,text:'Population Doubling'},beginAtZero:true}}}});
+  dtChart=new Chart(document.getElementById('dt-chart'),{type:'line',data:{datasets:sg.map(([n,pts],i)=>{
+    const s=pts.filter(p=>p.dt).slice().sort((a,b)=>String(a.x).localeCompare(String(b.x)));
+    return{label:n,data:s.map(p=>({x:p.x,y:p.dt})),borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+'33',tension:.3,pointRadius:5,fill:false};
+  })},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{type:'category',title:{display:true,text:xa==='date'?'תאריך':'Passage'}},y:{title:{display:true,text:'Doubling Time (h)'},beginAtZero:true}}}});
+}
+
+function renderStats(){
+  const gk=document.getElementById('stat-group').value;
+  const ctf=document.getElementById('stat-filter-type').value;
+  let data=allEntries; if(ctf) data=data.filter(e=>e.cell_type===ctf);
+  const groups={};
+  data.forEach(e=>{ const g=e[gk]||'לא ידוע'; if(!groups[g]) groups[g]=[]; groups[g].push(e); });
+  const rows=Object.entries(groups).map(([n,ents])=>{
+    const dts=ents.map(e=>parseFloat(e.dt)).filter(v=>!isNaN(v)&&v>0);
+    const pds=ents.map(e=>parseFloat(pd(e.plating,e.growth))).filter(v=>!isNaN(v)&&v>0);
+    const avg=dts.length?dts.reduce((a,b)=>a+b,0)/dts.length:null;
+    const std=dts.length>1?Math.sqrt(dts.reduce((a,b)=>a+Math.pow(b-avg,2),0)/(dts.length-1)):null;
+    const avgPD=pds.length?pds.reduce((a,b)=>a+b,0)/pds.length:null;
+    return{name:n,count:ents.length,avg,min:dts.length?Math.min(...dts):null,max:dts.length?Math.max(...dts):null,std,avgPD};
+  }).sort((a,b)=>(b.avg||0)-(a.avg||0));
+  const tb=document.getElementById('stats-tbody'); tb.innerHTML='';
+  document.getElementById('stats-empty').style.display=rows.length?'none':'block';
+  rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td><strong>${r.name}</strong></td><td>${r.count}</td><td>${r.avg?r.avg.toFixed(1)+'h':'—'}</td><td>${r.min?r.min.toFixed(1)+'h':'—'}</td><td>${r.max?r.max.toFixed(1)+'h':'—'}</td><td>${r.std?r.std.toFixed(1):'—'}</td><td>${r.avgPD?r.avgPD.toFixed(2):'—'}</td>`; tb.appendChild(tr); });
+  if(statsChart) statsChart.destroy();
+  statsChart=new Chart(document.getElementById('stats-chart'),{type:'bar',data:{labels:rows.map(r=>r.name),datasets:[{label:'ממוצע DT (h)',data:rows.map(r=>r.avg?parseFloat(r.avg.toFixed(1)):null),backgroundColor:rows.map((_,i)=>COLORS[i%COLORS.length]+'99'),borderColor:rows.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'שעות'},beginAtZero:true}}}});
+  if(compareChart) compareChart.destroy();
+  const cts=[...new Set(allEntries.map(e=>e.cell_type).filter(Boolean))];
+  const ctd=cts.map(ct=>{ const dts=allEntries.filter(e=>e.cell_type===ct).map(e=>parseFloat(e.dt)).filter(v=>!isNaN(v)&&v>0); return{ct,avg:dts.length?dts.reduce((a,b)=>a+b,0)/dts.length:null}; }).filter(d=>d.avg).sort((a,b)=>a.avg-b.avg);
+  compareChart=new Chart(document.getElementById('compare-chart'),{type:'bar',data:{labels:ctd.map(d=>d.ct),datasets:[{label:'ממוצע DT (h)',data:ctd.map(d=>parseFloat(d.avg.toFixed(1))),backgroundColor:ctd.map((_,i)=>COLORS[i%COLORS.length]+'bb'),borderColor:ctd.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'שעות'},beginAtZero:true}}}});
+}
+
+function fillDelList(){
+  const sel=document.getElementById('del-row'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— בחר רשומה —</option>'+allEntries.slice().reverse().map(e=>`<option value="${e.ts}">${e.date_count||''} | ${e.cell_type||''} | ${e.student||''} | P${e.passage||''}</option>`).join('');
+  if(cur) sel.value=cur;
+}
+
+function quickDel(ts, ct, student){
+  switchTab('delete');
+  setTimeout(()=>{ document.getElementById('del-row').value=ts; document.getElementById('del-requester').value=student; },50);
+}
+
+async function submitDeleteRequest(){
+  const ts=document.getElementById('del-row').value;
+  const reason=document.getElementById('del-reason').value.trim();
+  const name=document.getElementById('del-requester').value.trim();
+  if(!ts){ dmsg('נא לבחור רשומה','err'); return; }
+  if(!reason){ dmsg('נא להזין סיבה','err'); return; }
+  const entry=allEntries.find(e=>e.ts===ts);
+  if(!confirm(`שליחת בקשת מחיקה עבור:\n${entry?.cell_type||''} — ${entry?.student||''} (${entry?.date_count||''})\n\nהבקשה תישמר ב-Sheets לאישורך.`)) return;
+  try {
+    const p=new URLSearchParams({action:'delete_request',row_ts:ts,reason,student:name,cell_type:entry?.cell_type||''}).toString();
+    const r=await fetch(SCRIPT_URL+'?'+p,{method:'GET',mode:'cors'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(d.status==='ok'){ dmsg('הבקשה נשלחה ונשמרה ב-Google Sheets','ok'); document.getElementById('del-reason').value=''; }
+    else dmsg('שגיאה: '+(d.message||''),'err');
+  } catch(e){ dmsg('שגיאת חיבור','err'); }
+}
+function dmsg(txt,type){ const el=document.getElementById('del-msg'); el.textContent=txt; el.className='inline-msg '+type; el.style.display='inline-block'; if(type==='ok') setTimeout(()=>el.style.display='none',4000); }
 
 function exportCSV(){
   if(!allEntries.length) return;
-  const h = ['Student','Date','Tissue','Bovine','Passage','FGF','Plating','After growth','Days','Doubling time (h)'];
-  const rows = allEntries.map(e=>[
-    getVal(e,'Student','student'), getVal(e,'Date of counting','date_count'),
-    getVal(e,'Tissue','tissue'), getVal(e,'Bovine number','bovine'),
-    getVal(e,'Passage','passage'), getVal(e,'FGF','fgf'),
-    getVal(e,'Cell plating','plating'), getVal(e,'Cell after growth','growth'),
-    getVal(e,'Days in culture','days'), getVal(e,'Doubling time (h)','dt')
-  ]);
-  const csv = [h,...rows].map(r=>r.map(v=>`"${v||''}"`).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  a.download = 'cell_growth_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
+  const h=['Timestamp','Cell Type','Student','Date','Tissue','Bovine','Passage','FGF','Plating','After growth','Days','DT (h)','Pop.Doubling'];
+  const rows=allEntries.map(e=>[e.ts,e.cell_type,e.student,e.date_count,e.tissue,e.bovine,e.passage,e.fgf,e.plating,e.growth,e.days,e.dt,pd(e.plating,e.growth)]);
+  const csv=[h,...rows].map(r=>r.map(v=>`"${v||''}"`).join(',')).join('\n');
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv); a.download='cell_growth_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+}
+
+function refreshTab(){
+  const a=document.querySelector('.nav-btn.active'); if(!a) return;
+  const t=a.textContent;
+  if(t==='כל הנתונים') renderDataTable();
+  else if(t==='מעקב לאורך זמן') renderTimeline();
+  else if(t==='סטטיסטיקות') renderStats();
+  else if(t==='בקשות מחיקה') fillDelList();
 }
 
 function switchTab(t){
-  document.getElementById('pane-form').style.display = t==='form'?'block':'none';
-  document.getElementById('pane-data').style.display = t==='data'?'block':'none';
-  document.querySelectorAll('.tab').forEach((el,i)=>{
-    el.classList.toggle('active',(i===0&&t==='form')||(i===1&&t==='data'));
-  });
-  if(t==='data') loadData();
+  const map={form:'pane-form',data:'pane-data',timeline:'pane-timeline',stats:'pane-stats',delete:'pane-delete'};
+  const labels={form:'הוסף מדידה',data:'כל הנתונים',timeline:'מעקב לאורך זמן',stats:'סטטיסטיקות',delete:'בקשות מחיקה'};
+  Object.values(map).forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById(map[t]).style.display='block';
+  document.querySelectorAll('.nav-btn').forEach(btn=>btn.classList.toggle('active',btn.textContent===labels[t]));
+  if(t==='data') renderDataTable();
+  else if(t==='timeline') renderTimeline();
+  else if(t==='stats') renderStats();
+  else if(t==='delete') fillDelList();
 }
 
 init();
